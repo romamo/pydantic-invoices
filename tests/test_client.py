@@ -1,5 +1,7 @@
 """Tests for Client schema."""
 
+import pytest
+from pydantic import ValidationError
 from pydantic_invoices.schemas.client import Client, ClientCreate, ClientUpdate
 
 
@@ -60,3 +62,9 @@ class TestClientUpdate:
         )
         assert update.name == "Updated Name"
         assert update.address == "New Address"
+
+
+def test_invalid_tax_id_rejected():
+    """Invalid tax IDs must not fall through to a plain str."""
+    with pytest.raises(ValidationError):
+        ClientCreate(name="Acme Corp", tax_id="a!")

@@ -111,12 +111,11 @@ class InvoiceBase(BaseModel):
     @model_validator(mode="after")
     def validate_due_date(self) -> "InvoiceBase":
         """Ensure due date is not before issue date."""
-        if self.due_date and self.issue_date:
-            if self.due_date < self.issue_date:
-                raise ValueError(
-                    f"Due date ({self.due_date}) cannot be earlier than "
-                    f"issue date ({self.issue_date})"
-                )
+        if self.due_date and self.due_date < self.issue_date:
+            raise ValueError(
+                f"Due date ({self.due_date}) cannot be earlier than "
+                f"issue date ({self.issue_date})"
+            )
         return self
 
 

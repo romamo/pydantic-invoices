@@ -1,27 +1,51 @@
 """Value Objects for the Accounting domain."""
 
 from __future__ import annotations
+import functools
 import re
 from decimal import Decimal, InvalidOperation
-from typing import Any, TYPE_CHECKING, Union, Callable
+from typing import Any, TYPE_CHECKING, Union, Callable, ClassVar, TypeVar
 from pydantic import GetCoreSchemaHandler
 from pydantic_core import core_schema
-from stdnum.exceptions import ValidationError as StdnumValidationError
-import stdnum.eu.vat
-import stdnum.gb.vat
-import stdnum.us.ein
-import stdnum.au.abn
+
+_VO = TypeVar("_VO", bound="_PydanticVO")
+
+_GENERIC_TAX_ID_RE = re.compile(r"[A-Z0-9\- \.]{5,30}")
 
 
-_TAX_ID_VALIDATORS: list[Callable[[str], str]] = [
-    stdnum.eu.vat.validate,
-    stdnum.gb.vat.validate,
-    stdnum.us.ein.validate,
-    stdnum.au.abn.validate,
-]
+class _PydanticVO:
+    """Pydantic integration: coerce input via the constructor, serialize via `_serialize`."""
+
+    # Non-ValueError exceptions the constructor may raise that must surface as ValueError
+    _coerce_errors: ClassVar[tuple[type[Exception], ...]] = ()
+
+    @classmethod
+    def __get_pydantic_core_schema__(
+        cls, _source_type: Any, _handler: GetCoreSchemaHandler
+    ) -> core_schema.CoreSchema:
+        return core_schema.no_info_plain_validator_function(
+            cls._validate,
+            serialization=core_schema.plain_serializer_function_ser_schema(
+                cls._serialize,
+                when_used="always",
+            ),
+        )
+
+    @classmethod
+    def _validate(cls: type[_VO], value: Any) -> _VO:
+        if isinstance(value, cls):
+            return value
+        try:
+            return cls(value)  # type: ignore[call-arg]
+        except cls._coerce_errors as e:
+            raise ValueError(str(e)) from e
+
+    @classmethod
+    def _serialize(cls, instance: Any) -> str:
+        return str(instance)
 
 
-class Money:
+class Money(_PydanticVO):
     """Money Value Object avoiding primitive obsession with floats.
 
     Internally uses decimal.Decimal to avoid rounding errors.
@@ -165,47 +189,57 @@ class Money:
         return self.__mul__(factor)
 
     # Pydantic Integration
-    @classmethod
-    def __get_pydantic_core_schema__(
-        cls, _source_type: Any, _handler: GetCoreSchemaHandler
-    ) -> core_schema.CoreSchema:
-        return core_schema.no_info_plain_validator_function(
-            cls._validate,
-            serialization=core_schema.plain_serializer_function_ser_schema(
-                cls._serialize,
-                when_used="always",
-            ),
-        )
+    _coerce_errors = (InvalidOperation,)
 
     @classmethod
-    def _serialize(cls, instance: "Money") -> str:
+    def _serialize(cls, instance: Any) -> str:
         return str(instance.amount)
-
-    @classmethod
-    def _validate(cls, value: Any) -> "Money":
-        if isinstance(value, cls):
-            return value
-        try:
-            return cls(value)
-        except (ValueError, InvalidOperation) as e:
-            raise ValueError(str(e)) from e
 
     if TYPE_CHECKING:
         Input = Union["Money", str, Decimal, float, int]
 
 
-class TaxId:
+@functools.cache
+def _stdnum() -> tuple[type[Exception], tuple[Callable[[str], str], ...]]:
+    """Import python-stdnum on first use; it adds ~7 ms to package import."""
+    from stdnum.exceptions import ValidationError
+    import stdnum.eu.vat
+    import stdnum.gb.vat
+    import stdnum.us.ein
+    import stdnum.au.abn
+
+    return ValidationError, (
+        stdnum.eu.vat.validate,
+        stdnum.gb.vat.validate,
+        stdnum.us.ein.validate,
+        stdnum.au.abn.validate,
+    )
+
+
+def _normalize_tax_id(value: str) -> str:
+    """Try each known validator in order; fall back to a generic regex."""
+    validation_error, validators = _stdnum()
+    for validate in validators:
+        try:
+            return validate(value)
+        except validation_error:
+            continue
+
+    # Fallback: strict alphanumeric structural check for unknown formats
+    if not _GENERIC_TAX_ID_RE.fullmatch(value):
+        raise ValueError(f"Invalid Tax ID format: {value}")
+
+    return value
+
+
+class TaxId(_PydanticVO):
     """Tax Identification Number (e.g., EIN, VAT, TIC, ABN).
 
     Provides universal validation via python-stdnum and fails fast
     if the format is invalid. Avoids primitive obsession.
     """
 
-    def __init__(self, value: str | "TaxId") -> None:
-        if isinstance(value, TaxId):
-            self._value = value.value
-            return
-
+    def __init__(self, value: str) -> None:
         if not isinstance(value, str):
             raise ValueError(f"Cannot parse {type(value)} as TaxId")
 
@@ -213,21 +247,7 @@ class TaxId:
         if not clean_val:
             raise ValueError("TaxId cannot be empty")
 
-        self._value = self._validate_and_normalize(clean_val)
-
-    def _validate_and_normalize(self, value: str) -> str:
-        """Try each known validator in order; fall back to a generic regex."""
-        for validate in _TAX_ID_VALIDATORS:
-            try:
-                return validate(value)
-            except StdnumValidationError:
-                continue
-
-        # Fallback: strict alphanumeric structural check for unknown formats
-        if not re.match(r"^[A-Z0-9\- \.]{5,30}$", value):
-            raise ValueError(f"Invalid Tax ID format: {value}")
-
-        return value
+        self._value = _normalize_tax_id(clean_val)
 
     @property
     def value(self) -> str:
@@ -246,35 +266,11 @@ class TaxId:
             return self.value == other
         return False
 
-    @classmethod
-    def __get_pydantic_core_schema__(
-        cls, _source_type: Any, _handler: GetCoreSchemaHandler
-    ) -> core_schema.CoreSchema:
-        return core_schema.no_info_plain_validator_function(
-            cls._validate,
-            serialization=core_schema.plain_serializer_function_ser_schema(
-                cls._serialize,
-                when_used="always",
-            ),
-        )
-
-    @classmethod
-    def _validate(cls, value: Any) -> "TaxId":
-        if isinstance(value, cls):
-            return value
-        try:
-            return cls(value)
-        except ValueError as e:
-            raise ValueError(str(e)) from e
-
-    @classmethod
-    def _serialize(cls, instance: "TaxId") -> str:
-        return instance.value
-
     if TYPE_CHECKING:
         Input = Union["TaxId", str]
 
 
 if not TYPE_CHECKING:
     Money.Input = Union[Money, str, Decimal, float, int]
-    TaxId.Input = Union[TaxId, str]
+    # The validator already coerces str; a runtime Union would let invalid str bypass it
+    TaxId.Input = TaxId
