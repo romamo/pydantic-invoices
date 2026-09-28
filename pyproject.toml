@@ -2,7 +2,7 @@
 name = "pydantic-invoices"
 version = "1.4.1"
 description = "Pydantic schemas and repository interfaces for invoice management"
-authors = [{name = "Roman", email = "pipy@romavm.dev"}]
+authors = [{name = "Roman Medvedev", email = "pipy@romavm.dev"}]
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
