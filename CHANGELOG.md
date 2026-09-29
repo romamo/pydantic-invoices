@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.5.0
+
+- Added `CountryCode` Value Object: an ISO 3166-1 alpha-2 code (plus the EN 16931 codes `XI` and `1A`), normalized to upper case; unknown codes raise
+- Added `city`, `postal_code` and `country` (`CountryCode`) to `ClientBase` and `ClientUpdate`; integer postal codes are coerced to strings as for companies
+- Added buyer address snapshots to invoices: `client_city_snapshot`, `client_postal_code_snapshot`, `client_country_snapshot`. EN 16931 e-invoices (Factur-X, UBL) require the buyer's country code
+- `TaxId` fields now reject invalid values: `TaxId.Input` resolves to `TaxId` at runtime, so strings like `"123"` no longer bypass validation through the `str` member of the union. Stored clients or companies with such tax IDs fail to load until corrected
+- `TaxId` loads `python-stdnum` on first validation instead of at import
+
 ## 1.4.1
 
 - Added `TaxId` Value Object with multi-format validation via `python-stdnum` (EU VAT, UK VAT, US EIN, AU ABN) and a generic alphanumeric fallback.
