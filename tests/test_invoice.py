@@ -1,6 +1,9 @@
 """Tests for Invoice schema."""
 
 from datetime import date, timedelta
+
+import pytest
+from pydantic import ValidationError
 from pydantic_invoices.schemas.invoice import (
     Invoice,
     InvoiceCreate,
@@ -211,3 +214,27 @@ class TestInvoiceUpdate:
         )
         assert update.status == InvoiceStatus.PAID
         assert update.payment_terms == "Net 15"
+
+
+class TestClientAddressSnapshots:
+    """Buyer address snapshots on invoices."""
+
+    def test_snapshots_on_create_and_invoice(self):
+        data = dict(
+            number="INV-ADDR-1",
+            client_id=1,
+            client_city_snapshot="Paris",
+            client_postal_code_snapshot="75001",
+            client_country_snapshot="fr",
+        )
+        created = InvoiceCreate(**data)
+        invoice = Invoice(id=1, **data)
+        assert created.client_country_snapshot == "FR"
+        assert invoice.client_city_snapshot == "Paris"
+        assert invoice.model_dump()["client_country_snapshot"] == "FR"
+
+    def test_invalid_country_snapshot_rejected(self):
+        with pytest.raises(ValidationError):
+            InvoiceCreate(
+                number="INV-ADDR-2", client_id=1, client_country_snapshot="ZZ"
+            )

@@ -1,7 +1,7 @@
 import pytest
 from decimal import Decimal
-from pydantic import BaseModel
-from pydantic_invoices.vo import Money, TaxId
+from pydantic import BaseModel, ValidationError
+from pydantic_invoices.vo import CountryCode, Money, TaxId
 
 
 def test_money_basic_parsing():
@@ -104,3 +104,26 @@ def test_taxid_pydantic_validation():
 
     # Should serialize seamlessly back to string
     assert m.model_dump()["tax_id"] == "CY10259033P"
+
+
+def test_country_code_normalizes_case_and_whitespace():
+    assert CountryCode(" de ").value == "DE"
+    assert CountryCode("XI").value == "XI"
+    assert CountryCode("1a").value == "1A"
+
+
+def test_country_code_rejects_unknown_codes():
+    for value in ["", "D", "DEU", "XX", "Germany"]:
+        with pytest.raises(ValueError, match="not an ISO 3166-1 alpha-2"):
+            CountryCode(value)
+
+
+def test_country_code_pydantic_validation():
+    class Address(BaseModel):
+        country: CountryCode.Input
+
+    address = Address(country="fr")
+    assert isinstance(address.country, CountryCode)
+    assert address.model_dump()["country"] == "FR"
+    with pytest.raises(ValidationError):
+        Address(country="Neverland")

@@ -270,7 +270,62 @@ class TaxId(_PydanticVO):
         Input = Union["TaxId", str]
 
 
+# ISO 3166-1 alpha-2, plus the EN 16931 additions XI (Northern Ireland) and 1A (Kosovo)
+_COUNTRY_CODES = frozenset(
+    """
+    AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI
+    BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN
+    CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK
+    FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM
+    HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN
+    KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK
+    ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP
+    NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW
+    SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF
+    TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI
+    VN VU WF WS YE YT ZA ZM ZW XI 1A
+    """.split()
+)
+
+
+class CountryCode(_PydanticVO):
+    """ISO 3166-1 alpha-2 country code, as used for postal addresses in e-invoices."""
+
+    def __init__(self, value: str) -> None:
+        if not isinstance(value, str):
+            raise ValueError(f"Cannot parse {type(value)} as CountryCode")
+
+        code = value.strip().upper()
+        if code not in _COUNTRY_CODES:
+            raise ValueError(f"'{value}' is not an ISO 3166-1 alpha-2 country code")
+        self._value = code
+
+    @property
+    def value(self) -> str:
+        return self._value
+
+    def __str__(self) -> str:
+        return self._value
+
+    def __repr__(self) -> str:
+        return f"CountryCode('{self._value}')"
+
+    def __eq__(self, other: Any) -> bool:
+        if isinstance(other, CountryCode):
+            return self.value == other.value
+        if isinstance(other, str):
+            return self.value == other
+        return False
+
+    def __hash__(self) -> int:
+        return hash(self._value)
+
+    if TYPE_CHECKING:
+        Input = Union["CountryCode", str]
+
+
 if not TYPE_CHECKING:
     Money.Input = Union[Money, str, Decimal, float, int]
     # The validator already coerces str; a runtime Union would let invalid str bypass it
     TaxId.Input = TaxId
+    CountryCode.Input = CountryCode

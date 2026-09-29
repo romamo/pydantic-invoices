@@ -68,3 +68,24 @@ def test_invalid_tax_id_rejected():
     """Invalid tax IDs must not fall through to a plain str."""
     with pytest.raises(ValidationError):
         ClientCreate(name="Acme Corp", tax_id="a!")
+
+
+class TestClientAddress:
+    """Postal address fields needed for EN 16931 buyer details."""
+
+    def test_address_fields(self):
+        client = ClientCreate(
+            name="Acme", city="Berlin", postal_code=10115, country="de"
+        )
+        assert client.city == "Berlin"
+        assert client.postal_code == "10115"
+        assert client.country == "DE"
+
+    def test_invalid_country_rejected(self):
+        with pytest.raises(ValidationError):
+            ClientCreate(name="Acme", country="Germany")
+
+    def test_update_address_fields(self):
+        update = ClientUpdate(postal_code=75001, country="fr")
+        assert update.postal_code == "75001"
+        assert update.country == "FR"

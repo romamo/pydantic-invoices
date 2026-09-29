@@ -9,7 +9,7 @@ from pydantic import (
     computed_field,
     model_validator,
 )
-from pydantic_invoices.vo import Money
+from pydantic_invoices.vo import CountryCode, Money
 from datetime import date
 from typing import Optional, List, TYPE_CHECKING, Any
 
@@ -87,6 +87,15 @@ class InvoiceBase(BaseModel):
     )
     client_tax_id_snapshot: Optional[str] = Field(
         None, max_length=50, description="Client tax ID at invoice time"
+    )
+    client_city_snapshot: Optional[str] = Field(
+        None, max_length=100, description="Client city at invoice time"
+    )
+    client_postal_code_snapshot: Optional[str] = Field(
+        None, max_length=20, description="Client postal code at invoice time"
+    )
+    client_country_snapshot: Optional[CountryCode.Input] = Field(
+        None, description="Client ISO 3166-1 alpha-2 country code at invoice time"
     )
 
     # Company snapshots (immutable)
@@ -182,6 +191,9 @@ class Invoice(InvoiceBase):
     client_name_snapshot: Optional[str] = None
     client_address_snapshot: Optional[str] = None
     client_tax_id_snapshot: Optional[str] = None
+    client_city_snapshot: Optional[str] = None
+    client_postal_code_snapshot: Optional[str] = None
+    client_country_snapshot: Optional[CountryCode.Input] = None
     company_name_snapshot: Optional[str] = None
     company_address_snapshot: Optional[str] = None
     company_tax_id_snapshot: Optional[str] = None
