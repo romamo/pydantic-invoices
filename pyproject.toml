@@ -1,6 +1,6 @@
 [project]
 name = "pydantic-invoices"
-version = "1.7.0"
+version = "1.8.0"
 description = "Pydantic schemas and repository interfaces for invoice management"
 authors = [{name = "Roman Medvedev", email = "pipy@romavm.dev"}]
 readme = "README.md"

@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.8.0
 
 - Added `number_prefix` to `CompanyBase` and `CompanyUpdate`: an alphanumeric prefix (up to 20 characters) that gives a company its own invoice and credit note number series, so two companies never share one sequence or produce equal numbers. `None` keeps the unprefixed series ([romamo/py-invoices#12](https://github.com/romamo/py-invoices/issues/12))
 
