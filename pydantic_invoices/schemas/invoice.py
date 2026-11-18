@@ -10,6 +10,7 @@ from pydantic import (
     model_validator,
 )
 from pydantic_invoices.vo import CountryCode, Money
+from .payment_note import PaymentNoteSnapshot
 from datetime import date
 from typing import Optional, List, TYPE_CHECKING, Any
 
@@ -112,6 +113,13 @@ class InvoiceBase(BaseModel):
     # Payment notes (can select multiple)
     payment_note_ids: List[int] = Field(
         default_factory=list, description="IDs of payment notes to include"
+    )
+    payment_notes_snapshot: Optional[List[PaymentNoteSnapshot]] = Field(
+        None,
+        description=(
+            "Payment notes as printed at invoice time; "
+            "None for invoices stored before snapshots existed"
+        ),
     )
     template_name: Optional[str] = Field(
         None, max_length=255, description="Template filename used for this invoice"
