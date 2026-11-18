@@ -52,3 +52,12 @@ class PaymentNote(PaymentNoteBase):
     id: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class PaymentNoteSnapshot(BaseModel):
+    """A payment note's printed text, frozen on an invoice when it is created."""
+
+    title: str = Field(..., min_length=1, max_length=100)
+    content: str = Field(..., min_length=1, max_length=2000)
+
+    model_config = ConfigDict(frozen=True, from_attributes=True)

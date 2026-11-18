@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Added `PaymentNoteSnapshot` (`title`, `content`) and `payment_notes_snapshot` on invoices: the payment notes as printed when the invoice was created, so editing a payment note no longer changes the bank details of issued invoices. `None` marks an invoice stored before snapshots existed ([romamo/py-invoices#6](https://github.com/romamo/py-invoices/issues/6))
+
 ## 1.5.0
 
 - Added `CountryCode` Value Object: an ISO 3166-1 alpha-2 code (plus the EN 16931 codes `XI` and `1A`), normalized to upper case; unknown codes raise

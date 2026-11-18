@@ -238,3 +238,30 @@ class TestClientAddressSnapshots:
             InvoiceCreate(
                 number="INV-ADDR-2", client_id=1, client_country_snapshot="ZZ"
             )
+
+
+class TestPaymentNotesSnapshot:
+    """Payment notes frozen on the invoice."""
+
+    def test_snapshot_round_trips(self):
+        data = dict(
+            number="INV-PN-1",
+            client_id=1,
+            payment_note_ids=[3],
+            payment_notes_snapshot=[{"title": "Bank", "content": "IBAN DE00"}],
+        )
+        created = InvoiceCreate(**data)
+        invoice = Invoice.model_validate(Invoice(id=1, **data).model_dump())
+        assert created.payment_notes_snapshot[0].content == "IBAN DE00"
+        assert invoice.payment_notes_snapshot == created.payment_notes_snapshot
+
+    def test_legacy_invoice_has_no_snapshot(self):
+        assert Invoice(id=1, number="INV-PN-2", client_id=1).payment_notes_snapshot is None
+
+    def test_empty_content_rejected(self):
+        with pytest.raises(ValidationError):
+            InvoiceCreate(
+                number="INV-PN-3",
+                client_id=1,
+                payment_notes_snapshot=[{"title": "Bank", "content": ""}],
+            )
