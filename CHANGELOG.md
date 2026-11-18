@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.6.0
 
 - Added `PaymentNoteSnapshot` (`title`, `content`) and `payment_notes_snapshot` on invoices: the payment notes as printed when the invoice was created, so editing a payment note no longer changes the bank details of issued invoices. `None` marks an invoice stored before snapshots existed ([romamo/py-invoices#6](https://github.com/romamo/py-invoices/issues/6))
 
