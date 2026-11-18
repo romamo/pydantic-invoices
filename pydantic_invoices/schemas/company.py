@@ -48,6 +48,17 @@ class CompanyBase(BaseModel):
         None, max_length=500, description="Path to company logo file"
     )
 
+    # Numbering
+    number_prefix: Optional[str] = Field(
+        None,
+        max_length=20,
+        pattern=r"^[A-Za-z0-9]+$",
+        description=(
+            "Prefix of this company's invoice and credit note numbers, giving it its "
+            "own series (e.g. 'AC' -> 'AC-INV-2026-0001'); None uses the unprefixed series"
+        ),
+    )
+
     # Settings
     is_active: bool = Field(default=True, description="Whether this company is active")
     is_default: bool = Field(
@@ -76,6 +87,7 @@ class CompanyUpdate(BaseModel):
     phone: Optional[str] = Field(None, max_length=50)
     website: Optional[str] = Field(None, max_length=255)
     logo_path: Optional[str] = Field(None, max_length=500)
+    number_prefix: Optional[str] = Field(None, max_length=20, pattern=r"^[A-Za-z0-9]+$")
     is_active: Optional[bool] = None
     is_default: Optional[bool] = None
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Added `number_prefix` to `CompanyBase` and `CompanyUpdate`: an alphanumeric prefix (up to 20 characters) that gives a company its own invoice and credit note number series, so two companies never share one sequence or produce equal numbers. `None` keeps the unprefixed series ([romamo/py-invoices#12](https://github.com/romamo/py-invoices/issues/12))
+
 ## 1.7.0
 
 - Added `content_hash` to invoices: the SHA-256 of an issued invoice's locked content, so stored invoices can be checked for edits after issue ([romamo/py-invoices#5](https://github.com/romamo/py-invoices/issues/5))
