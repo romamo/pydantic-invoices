@@ -124,6 +124,14 @@ class InvoiceBase(BaseModel):
     template_name: Optional[str] = Field(
         None, max_length=255, description="Template filename used for this invoice"
     )
+    content_hash: Optional[str] = Field(
+        None,
+        pattern=r"^[0-9a-f]{64}$",
+        description=(
+            "SHA-256 of the invoice's locked content, set when it is issued; "
+            "None for drafts and invoices issued before hashing existed"
+        ),
+    )
 
     @model_validator(mode="after")
     def validate_due_date(self) -> "InvoiceBase":

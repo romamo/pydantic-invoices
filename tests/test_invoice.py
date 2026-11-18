@@ -256,7 +256,9 @@ class TestPaymentNotesSnapshot:
         assert invoice.payment_notes_snapshot == created.payment_notes_snapshot
 
     def test_legacy_invoice_has_no_snapshot(self):
-        assert Invoice(id=1, number="INV-PN-2", client_id=1).payment_notes_snapshot is None
+        assert (
+            Invoice(id=1, number="INV-PN-2", client_id=1).payment_notes_snapshot is None
+        )
 
     def test_empty_content_rejected(self):
         with pytest.raises(ValidationError):
@@ -265,3 +267,19 @@ class TestPaymentNotesSnapshot:
                 client_id=1,
                 payment_notes_snapshot=[{"title": "Bank", "content": ""}],
             )
+
+
+class TestContentHash:
+    """Content hash of issued invoices."""
+
+    def test_hash_round_trips(self):
+        digest = "ab" * 32
+        invoice = Invoice(id=1, number="INV-H-1", client_id=1, content_hash=digest)
+        assert Invoice.model_validate(invoice.model_dump()).content_hash == digest
+
+    def test_draft_has_no_hash(self):
+        assert InvoiceCreate(number="INV-H-2", client_id=1).content_hash is None
+
+    def test_malformed_hash_rejected(self):
+        with pytest.raises(ValidationError):
+            InvoiceCreate(number="INV-H-3", client_id=1, content_hash="xyz")
