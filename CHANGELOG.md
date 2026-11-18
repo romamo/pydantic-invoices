@@ -3,7 +3,6 @@
 ## Unreleased
 
 - Added `content_hash` to invoices: the SHA-256 of an issued invoice's locked content, so stored invoices can be checked for edits after issue ([romamo/py-invoices#5](https://github.com/romamo/py-invoices/issues/5))
-- `AuditLog` covers any record: `entity_type` (`AuditEntity`: invoice, payment_note, client, company) and `entity_id`; `invoice_id` is optional and set only on invoice entries; `corrects_id` points at the entry a correction amends. Entries stored before have only `invoice_id` and load as invoice entries ([romamo/py-invoices#7](https://github.com/romamo/py-invoices/issues/7))
 
 ## 1.6.0
 
