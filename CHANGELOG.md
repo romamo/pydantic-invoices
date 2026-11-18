@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 1.7.0
 
 - Added `content_hash` to invoices: the SHA-256 of an issued invoice's locked content, so stored invoices can be checked for edits after issue ([romamo/py-invoices#5](https://github.com/romamo/py-invoices/issues/5))
 
